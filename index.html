@@ -93,10 +93,11 @@
             <button @click="backToSemiFinals">Go back to Semi Finals</button>
             <button @click="toRoundup">Go to prediction roundup</button>
         </div>
-        <div id="roundup" v-show="showRoundup">
+        <div id="roundupDiv" v-show="showRoundup">
             <span style="white-space: pre-line">{{roundup}}</span>
-
             {{ this.roundupString }}
+            <br>
+            <a :href="url">Email Prediction</a>
         </div>
     </main>
 </div>
@@ -367,6 +368,7 @@ const app = new Vue({
             this.showSemiFinals = false;
             this.showFinalAndThirdPlace = false;
             this.showRoundup = false;
+            this.url = 'test'
             this.generateRoundOf16();
         },
         generateRoundOf16() {
@@ -503,7 +505,6 @@ const app = new Vue({
                         quarterFinal = this.quarterFinals.find(q => q.match === "Quarter Final 1");
                         team = match.teams.find(t => t.winner);
                         loser = match.teams.find(t => !t.winner);
-                        console.log('team', team);
                         this.roundOf16Match1Winner = team.team;
                         this.roundOf16Match1RunnerUp = loser.team;
                         team.winner = false;
@@ -668,18 +669,10 @@ const app = new Vue({
             })       
         },
         toRoundup() {
-            console.log('final', this.final);
-
             const winner = this.final.teams.find(t => t.winner);
             const runnerUp = this.final.teams.find(t => !t.winner);
             const third = this.thirdPlacePlayoff.teams.find(t => t.winner);
             const fourth = this.thirdPlacePlayoff.teams.find(t => !t.winner);
-
-            console.log('winner', winner);
-            console.log('runnerUp', runnerUp);
-            console.log('third', third);
-            console.log('fourth', fourth);
-
 
             this.worldCupFinalWinner = winner.team;
             this.worldFinalRunnerUp = runnerUp.team;
@@ -763,9 +756,43 @@ const app = new Vue({
             ${this.worldFinalRunnerUp}\n
             \nWorld Cup Winner\n
             ${this.worldCupFinalWinner}`;
-            console.log('roundup', roundup)
+        },
+        url() {
+            return `mailto:garryturner42@gmail.com?subject=World Cup Predictor&body=Group Stages\r\n
+            Group A - Winner:  ${this.groupAWinner}, Runner up - ${this.groupARunnerUp}\n
+            Group B - Winner:  ${this.groupBWinner}, Runner up - ${this.groupBRunnerUp}\n
+            Group C - Winner:  ${this.groupCWinner}, Runner up - ${this.groupCRunnerUp}\n
+            Group D - Winner:  ${this.groupDWinner}, Runner up - ${this.groupDRunnerUp}\n
+            Group E - Winner:  ${this.groupEWinner}, Runner up - ${this.groupERunnerUp}\n
+            Group F - Winner:  ${this.groupFWinner}, Runner up - ${this.groupFRunnerUp}\n
+            Group G - Winner:  ${this.groupGWinner}, Runner up - ${this.groupGRunnerUp}\n
+            Group H - Winner:  ${this.groupHWinner}, Runner up - ${this.groupHRunnerUp}\n
+            \n Round of 16\n
+            Match 1 - Winner: ${this.roundOf16Match1Winner}, Runner up - ${this.roundOf16Match1RunnerUp}\n
+            Match 2 - Winner: ${this.roundOf16Match2Winner}, Runner up - ${this.roundOf16Match2RunnerUp}\n
+            Match 3 - Winner: ${this.roundOf16Match3Winner}, Runner up - ${this.roundOf16Match3RunnerUp}\n
+            Match 4 - Winner: ${this.roundOf16Match4Winner}, Runner up - ${this.roundOf16Match4RunnerUp}\n
+            Match 5 - Winner: ${this.roundOf16Match5Winner}, Runner up - ${this.roundOf16Match5RunnerUp}\n
+            Match 6 - Winner: ${this.roundOf16Match6Winner}, Runner up - ${this.roundOf16Match6RunnerUp}\n
+            Match 7 - Winner: ${this.roundOf16Match7Winner}, Runner up - ${this.roundOf16Match7RunnerUp}\n
+            Match 8 - Winner: ${this.roundOf16Match8Winner}, Runner up - ${this.roundOf16Match8RunnerUp}\n
+            \nQuarter Finals\n
+            Quarter Final 1 - Winner: ${this.quarterFinal1Winner}, Runner up - ${this.quarterFinal1RunnerUp}\n
+            Quarter Final 2 - Winner: ${this.quarterFinal2Winner}, Runner up - ${this.quarterFinal2RunnerUp}\n
+            Quarter Final 3 - Winner: ${this.quarterFinal3Winner}, Runner up - ${this.quarterFinal3RunnerUp}\n
+            Quarter Final 4 - Winner: ${this.quarterFinal4Winner}, Runner up - ${this.quarterFinal4RunnerUp}\n
+            \nSemi Finals\n
+            Semi Final 1 - Winner: ${this.semiFinal1Winner}, Runner up - ${this.semiFinal1RunnerUp}\n
+            Semi Final 2 - Winner: ${this.semiFinal2Winner}, Runner up - ${this.semiFinal2RunnerUp}\n
+            \nFourth\n
+            ${this.thirdPlacePlayoffRunnerUp}\n
+            \nThird\n
+            ${this.thirdPlacePlayoffWinner}\n
+            \nRunner Up\n
+            ${this.worldFinalRunnerUp}\n
+            \nWorld Cup Winner\n
+            ${this.worldCupFinalWinner}`
         }
-    
     }
 })
 </script>
@@ -780,5 +807,28 @@ body {
 
 main {
 	margin-left: 10px;
+}
+
+table {
+    font-family: Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 50%; 
+}
+
+td, th {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+tr:nth-child(even){background-color: #f2f2f2;}
+
+tr:hover {background-color: #ddd;}
+
+th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #04AA6D;
+    color: white;
 }
 </style>
