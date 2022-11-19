@@ -1,0 +1,784 @@
+<div id="app">
+    <main>  
+        <div id="groupStage" v-show="showGroupStage">
+            <h2>Group Stage</h2>
+            <div v-for="group, index in groups">
+                Group {{ group.group }}
+                <table id="group">
+                    <thead>
+                        <th>Team</th>
+                        <th>Position</th>
+                    </thead>
+                    <tr v-for="team in group.teams">
+                        <td>{{ team.name }}</td>
+                        <td><input v-model=team.position type="number" min="1" max="4"/></td>
+                    </tr>
+                </table>
+                <br/>
+            </div>
+            <button @click="submitPositions">Submit</button>
+        </div>
+
+        <div id="roundOf16" v-show="showRoundOf16">
+            <h2>Round of 16</h2>
+            <table>
+                <tr v-for="match, index in roundOf16">       
+                    <td>{{match.match}}</td>
+                    <td><input type="checkbox" v-model=match.teams[0].winner /> </td>
+                    <td>{{ match.teams[0].team }} </td>
+                    <td>vs </td>
+                    <td>{{ match.teams[1].team }} </td>
+                    <td><input type="checkbox" v-model=match.teams[1].winner /></td>
+                </tr>
+            </table>
+            <button @click="backToGroupStage">Go back to Group Stage</button>
+            <button @click="generateQuarterFinals">Generate Quarter Finals</button>
+        </div>
+        
+        <div id="quarterFinals" v-show="showQuarterFinals">
+            <h2>Quarter Finals</h2>
+            <table>
+                <tr v-for="match, index in quarterFinals">       
+                    <td>{{match.match}}</td>
+                    <td><input type="checkbox" v-model=match.teams[0].winner /> </td>
+                    <td>{{ match.teams[0].team }} </td>
+                    <td>vs </td>
+                    <td>{{ match.teams[1].team }} </td>
+                    <td><input type="checkbox" v-model=match.teams[1].winner /></td>
+                </tr>
+            </table>
+            <button @click="backToRoundOf16">Go back to Round of 16</button>
+            <button @click="generateSemiFinals">Generate Semi Finals</button>
+        </div>
+        
+        <div id="semiFinals" v-show="showSemiFinals">
+            <h2>Semi Finals</h2>
+            <table>
+                <tr v-for="match, index in semiFinals">       
+                    <td>{{match.match}}</td>
+                    <td><input type="checkbox" v-model=match.teams[0].winner /> </td>
+                    <td>{{ match.teams[0].team }} </td>
+                    <td>vs </td>
+                    <td>{{ match.teams[1].team }} </td>
+                    <td><input type="checkbox" v-model=match.teams[1].winner /></td>
+                </tr>
+            </table>
+            <button @click="backToQuarterFinals">Go back to Quarter Finals</button>
+            <button @click="generateFinalAndPlayOff">Generate Final</button>
+        </div>
+        
+        <div id="finalAndThirdPlace" v-show="showFinalAndThirdPlace">
+            <h2>World Cup Final</h2>
+            <table>
+                <tr>       
+                    <td><input type="checkbox" v-model=final.teams[0].winner /> </td>
+                    <td>{{ final.teams[0].team }} </td>
+                    <td>vs </td>
+                    <td>{{ final.teams[1].team }} </td>
+                    <td><input type="checkbox" v-model=final.teams[1].winner /></td>
+                </tr>
+            </table>
+
+            <h2>Third Place Play-Off</h2>
+            <table>
+                <tr>       
+                    <td><input type="checkbox" v-model=thirdPlacePlayoff.teams[0].winner /> </td>
+                    <td>{{ thirdPlacePlayoff.teams[0].team }} </td>
+                    <td>vs </td>
+                    <td>{{ thirdPlacePlayoff.teams[1].team }} </td>
+                    <td><input type="checkbox" v-model=thirdPlacePlayoff.teams[1].winner /></td>
+                </tr>
+            </table>
+            <br/>
+            <button @click="backToSemiFinals">Go back to Semi Finals</button>
+            <button @click="toRoundup">Go to prediction roundup</button>
+        </div>
+        <div id="roundup" v-show="showRoundup">
+            <span style="white-space: pre-line">{{roundup}}</span>
+
+            {{ this.roundupString }}
+        </div>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
+
+<script>
+const app = new Vue({
+    el: '#app',
+    data: {
+        showGroupStage: true,
+        showRoundOf16: false,
+        showQuarterFinals: false,
+        showSemiFinals: false,
+        showFinalAndThirdPlace: false,
+        showRoundup: false,
+        roundup: '',
+        groupAWinner: '',
+        groupARunnerUp: '',
+        groupBWinner: '',
+        groupBRunnerUp: '',
+        groupCWinner: '',
+        groupCRunnerUp: '',
+        groupDWinner: '',
+        groupDRunnerUp: '',
+        groupEWinner: '',
+        groupERunnerUp: '',
+        groupFWinner: '',
+        groupFRunnerUp: '',
+        groupGWinner: '',
+        groupGRunnerUp: '',
+        groupHWinner: '',
+        groupHRunnerUp: '',
+        roundOf16Match1Winner: '',
+        roundOf16Match1RunnerUp: '',
+        roundOf16Match2Winner: '',
+        roundOf16Match2RunnerUp: '',
+        roundOf16Match3Winner: '',
+        roundOf16Match3RunnerUp: '',
+        roundOf16Match4Winner: '',
+        roundOf16Match4RunnerUp: '',
+        roundOf16Match5Winner: '',
+        roundOf16Match5RunnerUp: '',
+        roundOf16Match6Winner: '',
+        roundOf16Match6RunnerUp: '',
+        roundOf16Match7Winner: '',
+        roundOf16Match7RunnerUp: '',
+        roundOf16Match8Winner: '',
+        roundOf16Match8RunnerUp: '',
+        quarterFinal1Winner: '',
+        quarterFinal1RunnerUp: '',
+        quarterFinal2Winner: '',
+        quarterFinal2RunnerUp: '',
+        quarterFinal3Winner: '',
+        quarterFinal3RunnerUp: '',
+        quarterFinal4Winner: '',
+        quarterFinal4RunnerUp: '',
+        semiFinal1Winner: '',
+        semiFinal1RunnerUp: '',
+        semiFinal2Winner: '',
+        semiFinal2RunnerUp: '',
+        worldCupFinalWinner: '',
+        worldFinalRunnerUp: '',
+        thirdPlacePlayoffWinner: '',
+        thirdPlacePlayoffRunnerUp: '',
+        groups: [
+            { 
+                "group": "A",
+                "teams" : [
+                    { "name": "Qatar", "position": 1},
+                    { "name": "Ecuador", "position": 2},
+                    { "name": "Senegal", "position": 3},
+                    { "name": "Netherlands", "position": 4}
+                ]
+            },
+            { 
+                "group": "B",
+                "teams" : [
+                    { "name": "England", "position": 1},
+                    { "name": "Iran", "position": 2},
+                    { "name": "USA", "position": 3},
+                    { "name": "Wales", "position": 4}
+                ]
+            },
+            { 
+                "group": "C",
+                "teams" : [
+                    { "name": "Argentina", "position": 1},
+                    { "name": "Saudi Arabia", "position": 2},
+                    { "name": "Mexico", "position": 3},
+                    { "name": "Poland", "position": 4}
+                ]
+            },
+            { 
+                "group": "D",
+                "teams" : [
+                    { "name": "France", "position": 1},
+                    { "name": "Australia", "position": 2},
+                    { "name": "Denmark", "position": 3},
+                    { "name": "Tunisia", "position": 4}
+                ]
+            },
+            { 
+                "group": "E",
+                "teams" : [
+                    { "name": "Spain", "position": 1},
+                    { "name": "Costa Rica", "position": 2},
+                    { "name": "Germany", "position": 3},
+                    { "name": "Japan", "position": 4}
+                ]
+            },
+            { 
+                "group": "F",
+                "teams" : [
+                    { "name": "Belgium", "position": 1},
+                    { "name": "Canada", "position": 2},
+                    { "name": "Morocco", "position": 3},
+                    { "name": "Croatia", "position": 4}
+                ]
+            },
+            { 
+                "group": "G",
+                "teams" : [
+                    { "name": "Brazil", "position": 1},
+                    { "name": "Serbia", "position": 2},
+                    { "name": "Switzerland", "position": 3},
+                    { "name": "Cameroon", "position": 4}
+                ]
+            },
+            { 
+                "group": "H",
+                "teams" : [
+                    { "name": "Portugal", "position": 1},
+                    { "name": "Ghana", "position": 2},
+                    { "name": "Uruguay", "position": 3},
+                    { "name": "South Korea", "position": 4}
+                ]
+            },
+        ],
+        roundOf16 : [
+            {
+                "match": "Match 1", 
+                "teams" : [
+                    { "team": "Winner of Group A", "winner": false},
+                    { "team": "Runner-up of Group B", "winner": false},
+                ]   
+            },
+            {
+                "match": "Match 2", 
+                "teams" : [
+                    { "team": "Winner of Group C", "winner": false},
+                    { "team": "Runner-up of Group D", "winner": false},
+                ]   
+            },
+            {
+                "match": "Match 3", 
+                "teams" : [
+                    { "team": "Winner of Group E", "winner": false},
+                    { "team": "Runner-up of Group F", "winner": false},
+                ]   
+            },
+            {
+                "match": "Match 4", 
+                "teams" : [
+                    { "team": "Winner of Group G", "winner": false},
+                    { "team": "Runner-up of Group H", "winner": false},
+                ]   
+            },
+            {
+                "match": "Match 5", 
+                "teams" : [
+                    { "team": "Winner of Group B", "winner": false},
+                    { "team": "Runner-up of Group A", "winner": false},
+                ]   
+            },
+            {
+                "match": "Match 6", 
+                "teams" : [
+                    { "team": "Winner of Group D", "winner": false},
+                    { "team": "Runner-up of Group C", "winner": false},
+                ]   
+            },
+            {
+                "match": "Match 7", 
+                "teams" : [
+                    { "team": "Winner of Group F", "winner": false},
+                    { "team": "Runner-up of Group E", "winner": false},
+                ]   
+            },
+            {
+                "match": "Match 8", 
+                "teams" : [
+                    { "team": "Winner of Group H", "winner": false},
+                    { "team": "Runner-up of Group G", "winner": false},
+                ]   
+            }
+        ],
+        quarterFinals : [
+            {
+                "match": "Quarter Final 1", 
+                "teams" : [
+                    { "team": "Winner of Match 1", "winner": false},
+                    { "team": "Runner-up of Match 2", "winner": false},
+                ]   
+            },
+            {
+                "match": "Quarter Final 2", 
+                "teams" : [
+                    { "team": "Winner of Match 3", "winner": false},
+                    { "team": "Runner-up of Match 4", "winner": false},
+                ]   
+            },
+            {
+                "match": "Quarter Final 3", 
+                "teams" : [
+                    { "team": "Winner of Match 5", "winner": false},
+                    { "team": "Runner-up of Match 6", "winner": false},
+                ]   
+            },
+            {
+                "match": "Quarter Final 4", 
+                "teams" : [
+                    { "team": "Winner of Match 7", "winner": false},
+                    { "team": "Runner-up of Match 8", "winner": false},
+                ]   
+            }
+        ],
+        semiFinals : [
+            {
+                "match": "Semi Final 1", 
+                "teams" : [
+                    { "team": "Winner of Quarter Final 1", "winner": false},
+                    { "team": "Runner-up of Quarter Final 2", "winner": false},
+                ]   
+            },
+            {
+                "match": "Semi Final 2", 
+                "teams" : [
+                    { "team": "Winner of Quarter Final 3", "winner": false},
+                    { "team": "Runner-up of Quarter Final 4", "winner": false},
+                ]   
+            }
+        ],
+        thirdPlacePlayoff : {
+            "match": "Third Place Play-off", 
+            "teams" : [
+                { "team": "Loser of Semi Final 1", "winner": false},
+                { "team": "Loser of Semi Final 2", "winner": false},
+            ]   
+        },
+        final : {
+            "match": "World Cup Final", 
+            "teams" : [
+                { "team": "Winner of Semi Final 1", "winner": false},
+                { "team": "Winner of Semi Final 2", "winner": false},
+            ]   
+        },
+        goldenBoot: {
+            "player": "",
+            "nation" : "" 
+        }
+    },
+    methods: {
+        submitPositions() {
+            this.showGroupStage = false;
+            this.showRoundOf16 = true;
+            this.showQuarterFinals = false;
+            this.showSemiFinals = false;
+            this.showFinalAndThirdPlace = false;
+            this.showRoundup = false;
+            this.generateRoundOf16();
+        },
+        generateRoundOf16() {
+            let match1;
+            let match2;
+            let team1;
+            let team2;
+            let team1NotNull, team2NotNull = false;
+
+            this.groups.forEach(group => {
+                group.teams.forEach(team => {
+                    if(team.position == 1) {
+                        team1 = team;
+                        team1NotNull = true;
+                    }
+                    if(team.position == 2) {
+                        team2 = team;
+                        team2NotNull = true;
+                    }
+                });
+
+                if(!team1NotNull || !team2NotNull) {
+                    return;
+                }
+
+                switch(group.group) {
+                    case "A": {
+                        match1 = this.roundOf16.find(m => m.match === "Match 1");
+                        match2 = this.roundOf16.find(m => m.match === "Match 5");
+                        match1.teams[0].team = team1.name;
+                        match2.teams[1].team = team2.name;
+                        this.groupAWinner = team1.name;
+                        this.groupARunnerUp = team2.name;
+                        team1NotNull = false;
+                        team2NotNull = false;
+                        break;
+                    }
+                    case "B": {
+                        match1 = this.roundOf16.find(m => m.match === "Match 1");
+                        match2 = this.roundOf16.find(m => m.match === "Match 5");
+                        match1.teams[1].team = team2.name;
+                        match2.teams[0].team = team1.name;
+                        this.groupBWinner = team1.name;
+                        this.groupBRunnerUp = team2.name;
+                        team1NotNull = false;
+                        team2NotNull = false;
+                        break;
+                    }
+                    case "C": {
+                        match1 = this.roundOf16.find(m => m.match === "Match 2");
+                        match2 = this.roundOf16.find(m => m.match === "Match 6");
+                        match1.teams[0].team = team1.name;
+                        match2.teams[1].team = team2.name;
+                        this.groupCWinner = team1.name;
+                        this.groupCRunnerUp = team2.name;
+                        team1NotNull = false;
+                        team2NotNull = false;
+                        break;
+                    }
+                    case "D": {
+                        match1 = this.roundOf16.find(m => m.match === "Match 2");
+                        match2 = this.roundOf16.find(m => m.match === "Match 6");
+                        match1.teams[1].team = team2.name;
+                        match2.teams[0].team = team1.name;
+                        this.groupDWinner = team1.name;
+                        this.groupDRunnerUp = team2.name;
+                        team1NotNull = false;
+                        team2NotNull = false;
+                        break;
+                    }
+                    case "E": {
+                        match1 = this.roundOf16.find(m => m.match === "Match 3");
+                        match2 = this.roundOf16.find(m => m.match === "Match 7");
+                        match1.teams[0].team = team1.name;
+                        match2.teams[1].team = team2.name;
+                        this.groupEWinner = team1.name;
+                        this.groupERunnerUp = team2.name;
+                        team1NotNull = false;
+                        team2NotNull = false;
+                        break;
+                    }
+                    case "F": {
+                        match1 = this.roundOf16.find(m => m.match === "Match 3");
+                        match2 = this.roundOf16.find(m => m.match === "Match 7");
+                        match1.teams[1].team = team2.name;
+                        match2.teams[0].team = team1.name;
+                        this.groupFWinner = team1.name;
+                        this.groupFRunnerUp = team2.name;
+                        team1NotNull = false;
+                        team2NotNull = false;
+                        break;
+                    }
+                    
+                    case "G": {
+                        match1 = this.roundOf16.find(m => m.match === "Match 4");
+                        match2 = this.roundOf16.find(m => m.match === "Match 8");
+                        match1.teams[0].team = team1.name;
+                        match2.teams[1].team = team2.name;
+                        this.groupGWinner = team1.name;
+                        this.groupGRunnerUp = team2.name;
+                        team1NotNull = false;
+                        team2NotNull = false;
+                        break;
+                    }
+                    case "H": {
+                        match1 = this.roundOf16.find(m => m.match === "Match 4");
+                        match2 = this.roundOf16.find(m => m.match === "Match 8");
+                        match1.teams[1].team = team2.name;
+                        match2.teams[0].team = team1.name;
+                        this.groupHWinner = team1.name;
+                        this.groupHRunnerUp = team2.name;
+                        team1NotNull = false;
+                        team2NotNull = false;
+                        break;
+                    }                    
+                }
+            });
+        },
+        generateQuarterFinals() {
+            this.showGroupStage = false;
+            this.showRoundOf16 = false;
+            this.showQuarterFinals = true;
+            this.showSemiFinals = false;
+            this.showFinalAndThirdPlace = false;
+            this.showRoundup = false;
+           
+            let quarterFinal;
+            let team;
+            let loser;
+
+            this.roundOf16.forEach(match => {
+                switch(match.match) {
+                    case "Match 1":
+                        quarterFinal = this.quarterFinals.find(q => q.match === "Quarter Final 1");
+                        team = match.teams.find(t => t.winner);
+                        loser = match.teams.find(t => !t.winner);
+                        console.log('team', team);
+                        this.roundOf16Match1Winner = team.team;
+                        this.roundOf16Match1RunnerUp = loser.team;
+                        team.winner = false;
+                        quarterFinal.teams[0] = team;
+                        break;
+                    case "Match 2":
+                        quarterFinal = this.quarterFinals.find(q => q.match === "Quarter Final 1");
+                        team = match.teams.find(t => t.winner);
+                        loser = match.teams.find(t => !t.winner);
+                        this.roundOf16Match2Winner = team.team;
+                        this.roundOf16Match2RunnerUp = loser.team;
+                        team.winner = false;
+                        quarterFinal.teams[1] = team;
+                        break;
+                    case "Match 3":
+                        quarterFinal = this.quarterFinals.find(q => q.match === "Quarter Final 2");
+                        team = match.teams.find(t => t.winner);
+                        loser = match.teams.find(t => !t.winner);
+                        this.roundOf16Match3Winner = team.team;
+                        this.roundOf16Match3RunnerUp = loser.team;
+                        team.winner = false;
+                        quarterFinal.teams[0] = team;
+                        break;
+                    case "Match 4":
+                        quarterFinal = this.quarterFinals.find(q => q.match === "Quarter Final 2");
+                        team = match.teams.find(t => t.winner);
+                        loser = match.teams.find(t => !t.winner);
+                        this.roundOf16Match4Winner = team.team;
+                        this.roundOf16Match4RunnerUp = loser.team;
+                        team.winner = false;
+                        quarterFinal.teams[1] = team;
+                        break;
+                    case "Match 5":
+                        quarterFinal = this.quarterFinals.find(q => q.match === "Quarter Final 3");
+                        team = match.teams.find(t => t.winner);
+                        loser = match.teams.find(t => !t.winner);
+                        this.roundOf16Match5Winner = team.team;
+                        this.roundOf16Match5RunnerUp = loser.team;
+                        team.winner = false;
+                        quarterFinal.teams[0] = team;
+                        break;
+                    case "Match 6":
+                        quarterFinal = this.quarterFinals.find(q => q.match === "Quarter Final 3");
+                        team = match.teams.find(t => t.winner);
+                        loser = match.teams.find(t => !t.winner);
+                        this.roundOf16Match6Winner = team.team;
+                        this.roundOf16Match6RunnerUp = loser.team;
+                        team.winner = false;
+                        quarterFinal.teams[1] = team;
+                        break;
+                        case "Match 7":
+                        quarterFinal = this.quarterFinals.find(q => q.match === "Quarter Final 4");
+                        team = match.teams.find(t => t.winner);
+                        loser = match.teams.find(t => !t.winner);
+                        this.roundOf16Match7Winner = team.team;
+                        this.roundOf16Match7RunnerUp = loser.team;
+                        team.winner = false;
+                        quarterFinal.teams[0] = team;
+                        break;
+                    case "Match 8":
+                        quarterFinal = this.quarterFinals.find(q => q.match === "Quarter Final 4");
+                        team = match.teams.find(t => t.winner);
+                        loser = match.teams.find(t => !t.winner);
+                        this.roundOf16Match8Winner = team.team;
+                        this.roundOf16Match8RunnerUp = loser.team;
+                        team.winner = false;
+                        quarterFinal.teams[1] = team;
+                        break;
+                }
+            })
+        },
+        generateSemiFinals() {
+            this.showGroupStage = false;
+            this.showRoundOf16 = false;
+            this.showQuarterFinals = false;
+            this.showSemiFinals = true;
+            this.showFinalAndThirdPlace = false;
+            this.showRoundup = false;
+           
+            let semiFinal;
+            let team;
+            let loser;
+
+            this.quarterFinals.forEach(match => {    
+                switch(match.match) {
+                    case "Quarter Final 1":
+                        semiFinal = this.semiFinals.find(q => q.match === "Semi Final 1");
+                        team = match.teams.find(t => t.winner);
+                        loser = match.teams.find(t => !t.winner);
+                        this.quarterFinal1Winner = team.team;
+                        this.quarterFinal1RunnerUp = loser.team;
+                        team.winner = false;
+                        semiFinal.teams[0] = team;
+                        break;
+                    case "Quarter Final 2":
+                        semiFinal = this.semiFinals.find(q => q.match === "Semi Final 1");
+                        team = match.teams.find(t => t.winner);
+                        loser = match.teams.find(t => !t.winner);
+                        this.quarterFinal2Winner = team.team;
+                        this.quarterFinal2RunnerUp = loser.team;
+                        team.winner = false;
+                        semiFinal.teams[1] = team;
+                        break;
+                    case "Quarter Final 3":
+                        semiFinal = this.semiFinals.find(q => q.match === "Semi Final 2");
+                        team = match.teams.find(t => t.winner);
+                        loser = match.teams.find(t => !t.winner);
+                        this.quarterFinal3Winner = team.team;
+                        this.quarterFinal3RunnerUp = loser.team;
+                        team.winner = false;
+                        semiFinal.teams[0] = team;
+                        break;
+                    case "Quarter Final 4":
+                        semiFinal = this.semiFinals.find(q => q.match === "Semi Final 2");
+                        team = match.teams.find(t => t.winner);
+                        loser = match.teams.find(t => !t.winner);
+                        this.quarterFinal4Winner = team.team;
+                        this.quarterFinal4RunnerUp = loser.team;
+                        team.winner = false;
+                        semiFinal.teams[1] = team;
+                        break;
+                }
+            })            
+        },
+        generateFinalAndPlayOff() {
+            this.showGroupStage = false;
+            this.showRoundOf16 = false;
+            this.showQuarterFinals = false;
+            this.showSemiFinals = false;
+            this.showFinalAndThirdPlace = true;
+            this.showRoundup = false;
+
+            let final = this.final;
+            let thirdPlacePlayoff = this.thirdPlacePlayoff;
+            let team1;
+            let team2;
+
+            this.semiFinals.forEach(match => {    
+                switch(match.match) {
+                    case "Semi Final 1":
+                        team1 = match.teams.find(t => t.winner);
+                        team2 = match.teams.find(t => !t.winner);
+                        this.semiFinal1Winner = team1.team;
+                        this.semiFinal1RunnerUp = team2.team;
+                        team1.winner = false;
+                        team2.winner = false;
+                        final.teams[0] = team1;
+                        thirdPlacePlayoff.teams[0] = team2;
+                        break;
+
+                    case "Semi Final 2":
+                        team1 = match.teams.find(t => t.winner);
+                        team2 = match.teams.find(t => !t.winner);
+                        this.semiFinal2Winner = team1.team;
+                        this.semiFinal2RunnerUp = team2.team;
+                        team1.winner = false;
+                        team2.winner = false;
+                        final.teams[1] = team1;
+                        thirdPlacePlayoff.teams[1] = team2;
+                        break;
+                }
+            })       
+        },
+        toRoundup() {
+            console.log('final', this.final);
+
+            const winner = this.final.teams.find(t => t.winner);
+            const runnerUp = this.final.teams.find(t => !t.winner);
+            const third = this.thirdPlacePlayoff.teams.find(t => t.winner);
+            const fourth = this.thirdPlacePlayoff.teams.find(t => !t.winner);
+
+            console.log('winner', winner);
+            console.log('runnerUp', runnerUp);
+            console.log('third', third);
+            console.log('fourth', fourth);
+
+
+            this.worldCupFinalWinner = winner.team;
+            this.worldFinalRunnerUp = runnerUp.team;
+            this.thirdPlacePlayoffWinner = third.team;
+            this.thirdPlacePlayoffRunnerUp = fourth.team;
+
+            this.showGroupStage = false;
+            this.showRoundOf16 = false;
+            this.showQuarterFinals = false;
+            this.showSemiFinals = false;
+            this.showFinalAndThirdPlace = false;
+            this.showRoundup = true;
+        },
+        backToGroupStage() {
+            this.showGroupStage = true;
+            this.showRoundOf16 = false;
+            this.showQuarterFinals = false;
+            this.showSemiFinals = false;
+            this.showFinalAndThirdPlace = false;
+            this.showRoundup = false;
+        },
+        backToRoundOf16() {
+            this.showGroupStage = false;
+            this.showRoundOf16 = true;
+            this.showQuarterFinals = false;
+            this.showSemiFinals = false;
+            this.showFinalAndThirdPlace = false;
+            this.showRoundup = false;
+        },
+        backToQuarterFinals() {
+            this.showGroupStage = false;
+            this.showRoundOf16 = false;
+            this.showQuarterFinals = true;
+            this.showSemiFinals = false;
+            this.showFinalAndThirdPlace = false;
+            this.showRoundup = false;
+        },
+        backToSemiFinals() {
+            this.showGroupStage = false;
+            this.showRoundOf16 = false;
+            this.showQuarterFinals = false;
+            this.showSemiFinals = true;
+            this.showFinalAndThirdPlace = false;
+            this.showRoundup = false;
+        }
+    },
+    computed: {
+        roundupString() {
+
+            this.roundup = `Group Stages\r\n
+            Group A - Winner:  ${this.groupAWinner}, Runner up - ${this.groupARunnerUp}\n
+            Group B - Winner:  ${this.groupBWinner}, Runner up - ${this.groupBRunnerUp}\n
+            Group C - Winner:  ${this.groupCWinner}, Runner up - ${this.groupCRunnerUp}\n
+            Group D - Winner:  ${this.groupDWinner}, Runner up - ${this.groupDRunnerUp}\n
+            Group E - Winner:  ${this.groupEWinner}, Runner up - ${this.groupERunnerUp}\n
+            Group F - Winner:  ${this.groupFWinner}, Runner up - ${this.groupFRunnerUp}\n
+            Group G - Winner:  ${this.groupGWinner}, Runner up - ${this.groupGRunnerUp}\n
+            Group H - Winner:  ${this.groupHWinner}, Runner up - ${this.groupHRunnerUp}\n
+            \n Round of 16\n
+            Match 1 - Winner: ${this.roundOf16Match1Winner}, Runner up - ${this.roundOf16Match1RunnerUp}\n
+            Match 2 - Winner: ${this.roundOf16Match2Winner}, Runner up - ${this.roundOf16Match2RunnerUp}\n
+            Match 3 - Winner: ${this.roundOf16Match3Winner}, Runner up - ${this.roundOf16Match3RunnerUp}\n
+            Match 4 - Winner: ${this.roundOf16Match4Winner}, Runner up - ${this.roundOf16Match4RunnerUp}\n
+            Match 5 - Winner: ${this.roundOf16Match5Winner}, Runner up - ${this.roundOf16Match5RunnerUp}\n
+            Match 6 - Winner: ${this.roundOf16Match6Winner}, Runner up - ${this.roundOf16Match6RunnerUp}\n
+            Match 7 - Winner: ${this.roundOf16Match7Winner}, Runner up - ${this.roundOf16Match7RunnerUp}\n
+            Match 8 - Winner: ${this.roundOf16Match8Winner}, Runner up - ${this.roundOf16Match8RunnerUp}\n
+            \nQuarter Finals\n
+            Quarter Final 1 - Winner: ${this.quarterFinal1Winner}, Runner up - ${this.quarterFinal1RunnerUp}\n
+            Quarter Final 2 - Winner: ${this.quarterFinal2Winner}, Runner up - ${this.quarterFinal2RunnerUp}\n
+            Quarter Final 3 - Winner: ${this.quarterFinal3Winner}, Runner up - ${this.quarterFinal3RunnerUp}\n
+            Quarter Final 4 - Winner: ${this.quarterFinal4Winner}, Runner up - ${this.quarterFinal4RunnerUp}\n
+            \nSemi Finals\n
+            Semi Final 1 - Winner: ${this.semiFinal1Winner}, Runner up - ${this.semiFinal1RunnerUp}\n
+            Semi Final 2 - Winner: ${this.semiFinal2Winner}, Runner up - ${this.semiFinal2RunnerUp}\n
+            \nFourth\n
+            ${this.thirdPlacePlayoffRunnerUp}\n
+            \nThird\n
+            ${this.thirdPlacePlayoffWinner}\n
+            \nRunner Up\n
+            ${this.worldFinalRunnerUp}\n
+            \nWorld Cup Winner\n
+            ${this.worldCupFinalWinner}`;
+            console.log('roundup', roundup)
+        }
+    
+    }
+})
+</script>
+
+<style>
+body {
+	height: 100%;
+	font-family: calibri;
+	color:#282828;
+	margin: 0px;
+}
+
+main {
+	margin-left: 10px;
+}
+</style>
